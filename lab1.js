@@ -120,6 +120,10 @@ function processFile(inputFilePath, mode) {
         if (err) {
             throw new Error("Error occurred while reading file: ".concat(err));
         }
+        if (mode === 'frequency') {
+            frequencyDecrypt(data.trim());
+            return;
+        }
         var lines = data.trim().split('\n');
         if (lines.length < 2) {
             throw new Error('Wrong file format. \nFirst line should be: a b. Second line: text');
@@ -134,7 +138,29 @@ function processFile(inputFilePath, mode) {
         }
     });
 }
+/**
+ * Функция частотного анализа
+ * @param plainText - текст для анализа
+ */
+function frequencyDecrypt(plainText) {
+    var lettersCount = {};
+    for (var _i = 0, plainText_1 = plainText; _i < plainText_1.length; _i++) {
+        var char = plainText_1[_i];
+        if (encryptAlphabet.includes(char)) {
+            lettersCount[char] = (lettersCount[char] || 0) + 1;
+        }
+    }
+    console.log('| Буква | Кол-во, шт. | Частота, % |');
+    for (var _a = 0, encryptAlphabet_1 = encryptAlphabet; _a < encryptAlphabet_1.length; _a++) {
+        var letter = encryptAlphabet_1[_a];
+        var count = lettersCount[letter] || 0;
+        var freq = (count / plainText.length) * 100;
+        console.log("| ".concat(letter.padEnd(4), " | ").concat(count.toString().padStart(6), " | ").concat((freq.toFixed(3)).padStart(12), " |"));
+    }
+}
 // Вызов функции шифрования
 // processFile('./text.txt', 'encrypt');
 // Вызов функции дешифрации
-processFile('./text.txt', 'decrypt');
+// processFile('./text.txt', 'decrypt');
+// Вызов функции для частотного анализа
+processFile('./text2_encrypted.txt', 'frequency');

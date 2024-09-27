@@ -134,10 +134,15 @@ function decrypt(a: number, b: number, text: string) {
  * @param inputFilePath - путь до файла. В первой строке файла должны быть указаны коэффициенты A и B. В следующих строках должен быть текст для шифрации/дешифрации
  * @param mode - выбор варианта: шифрация или дешифрация
  */
-function processFile(inputFilePath: string, mode: 'encrypt' | 'decrypt' = 'encrypt'): void {
+function processFile(inputFilePath: string, mode: 'encrypt' | 'decrypt' | 'frequency' = 'encrypt'): void {
     fs.readFile(inputFilePath, 'utf8', (err, data) => {
         if (err) {
             throw new Error(`Error occurred while reading file: ${err}`);
+        }
+
+        if (mode === 'frequency') {
+            frequencyDecrypt(data.trim());
+            return;
         }
 
         const lines = data.trim().split('\n');
@@ -152,14 +157,40 @@ function processFile(inputFilePath: string, mode: 'encrypt' | 'decrypt' = 'encry
 
         if (mode === 'encrypt') {
             encrypt(Number(a), Number(b), text);
-        } else {
+        } else{
             decrypt(Number(a), Number(b), text);
         }
     });
 }
 
+/**
+ * Функция частотного анализа
+ * @param plainText - текст для анализа
+ */
+function frequencyDecrypt(plainText: string) {
+    const lettersCount: { [key: string]: number } = {};
+
+    for (let char of plainText) {
+        if (encryptAlphabet.includes(char)) {
+            lettersCount[char] = (lettersCount[char] || 0) + 1;
+        }
+    }
+
+    console.log('| Буква | Кол-во, шт. | Частота, % |');
+
+    for (let letter of encryptAlphabet) {
+        const count = lettersCount[letter] || 0;
+        const freq = (count / plainText.length) * 100;
+        console.log(`| ${letter.padEnd(4)} | ${count.toString().padStart(6)} | ${(freq.toFixed(3)).padStart(12)} |`);
+    }
+}
+
 // Вызов функции шифрования
-processFile('./text.txt', 'encrypt');
+// processFile('./text.txt', 'encrypt');
 
 // Вызов функции дешифрации
-processFile('./text.txt', 'decrypt');
+// processFile('./text.txt', 'decrypt');
+
+// Вызов функции для частотного анализа
+processFile('./text2_encrypted.txt', 'frequency');
+
