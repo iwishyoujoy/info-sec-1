@@ -159,7 +159,7 @@ function frequencyDecrypt(plainText) {
     }
 }
 // Вызов функции шифрования
-// processFile('./text.txt', 'encrypt');
+// processFile('./text2.txt', 'encrypt');
 // Вызов функции дешифрации
 // processFile('./text.txt', 'decrypt');
 // Вызов функции для частотного анализа
