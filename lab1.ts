@@ -193,4 +193,3 @@ function frequencyDecrypt(plainText: string) {
 
 // Вызов функции для частотного анализа
 processFile('./text2_encrypted.txt', 'frequency');
-
