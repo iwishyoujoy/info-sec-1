@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var fs = require("fs");
 // Символы, которые можно зашифровать (английский алфавит, русский алфавит, знаки препинания)
-var encryptAlphabet = 'abcdefghijklmnopqrstuvwxyzабвгдеёжзийклмнопрстуфхцчшщъыьэюя.,!?/-+='.split('');
+var encryptAlphabet = 'abcdefghijklmnopqrstuvwxyzабвгдеёжзийклмнопрстуфхцчшщъыьэюя.,!?/-+=(){}[]:;'.split('');
 // Количество символов в используемом алфавите
 var m = encryptAlphabet.length;
 // Функция для проверки чисел на взаимную простоту
@@ -86,7 +86,7 @@ function decryptChar(a, b, char) {
 function encrypt(a, b, text) {
     var symbolsToEncrypt = text.split('');
     if (!checkCoprimeNumbers(a))
-        console.error("A is not coprime to the length of alphabet. \n These are the options: ".concat(coprimedNumbers().join(" ")));
+        throw new Error("A is not coprime to the length of alphabet. \n These are the options: ".concat(coprimedNumbers().join(" ")));
     var result = [];
     symbolsToEncrypt.forEach(function (char) {
         result.push(encryptChar(a, b, char));
@@ -102,7 +102,7 @@ function encrypt(a, b, text) {
 function decrypt(a, b, text) {
     var symbolsToDecrypt = text.split('');
     if (!checkCoprimeNumbers(a))
-        console.error("A is not coprime to the length of alphabet. \n These are the options: ".concat(coprimedNumbers().join(" ")));
+        throw new Error("A is not coprime to the length of alphabet. \n These are the options: ".concat(coprimedNumbers().join(" ")));
     var result = [];
     symbolsToDecrypt.forEach(function (char) {
         result.push(decryptChar(a, b, char));
@@ -118,17 +118,13 @@ function processFile(inputFilePath, mode) {
     if (mode === void 0) { mode = 'encrypt'; }
     fs.readFile(inputFilePath, 'utf8', function (err, data) {
         if (err) {
-            console.error("Error occurred while reading file: ".concat(err));
-            return;
+            throw new Error("Error occurred while reading file: ".concat(err));
         }
-        var dataTrimmed = data.trim();
-        var breakLineIndex = dataTrimmed.indexOf('\n');
-        if (breakLineIndex === -1) {
-            console.error('Wrong file format. \nFirst line should be: a b. Second line: text');
-            return;
+        var lines = data.trim().split('\n');
+        if (lines.length < 2) {
+            throw new Error('Wrong file format. \nFirst line should be: a b. Second line: text');
         }
-        var coefficients = dataTrimmed.slice(0, breakLineIndex);
-        var text = dataTrimmed.slice(breakLineIndex + 1);
+        var coefficients = lines[0], text = lines[1];
         var _a = coefficients.split(" "), a = _a[0], b = _a[1];
         if (mode === 'encrypt') {
             encrypt(Number(a), Number(b), text);

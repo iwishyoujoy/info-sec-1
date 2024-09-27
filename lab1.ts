@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 
 // Символы, которые можно зашифровать (английский алфавит, русский алфавит, знаки препинания)
-const encryptAlphabet: string[] = 'abcdefghijklmnopqrstuvwxyzабвгдеёжзийклмнопрстуфхцчшщъыьэюя.,!?/-+='.split('');
+const encryptAlphabet: string[] = 'abcdefghijklmnopqrstuvwxyzабвгдеёжзийклмнопрстуфхцчшщъыьэюя.,!?/-+=(){}[]:;'.split('');
 
 // Количество символов в используемом алфавите
 const m = encryptAlphabet.length; 
@@ -98,7 +98,7 @@ function decryptChar(a: number, b: number, char: string): string {
 function encrypt(a: number, b: number, text: string) {
     const symbolsToEncrypt = text.split('');
 
-    if (!checkCoprimeNumbers(a)) console.error(`A is not coprime to the length of alphabet. \n These are the options: ${coprimedNumbers().join(" ")}`);
+    if (!checkCoprimeNumbers(a)) throw new Error(`A is not coprime to the length of alphabet. \n These are the options: ${coprimedNumbers().join(" ")}`);
 
     const result: string[] = [];
 
@@ -118,7 +118,7 @@ function encrypt(a: number, b: number, text: string) {
 function decrypt(a: number, b: number, text: string) {
     const symbolsToDecrypt = text.split('');
 
-    if (!checkCoprimeNumbers(a)) console.error(`A is not coprime to the length of alphabet. \n These are the options: ${coprimedNumbers().join(" ")}`);
+    if (!checkCoprimeNumbers(a)) throw new Error(`A is not coprime to the length of alphabet. \n These are the options: ${coprimedNumbers().join(" ")}`);
 
     const result: string[] = [];
 
@@ -137,20 +137,16 @@ function decrypt(a: number, b: number, text: string) {
 function processFile(inputFilePath: string, mode: 'encrypt' | 'decrypt' = 'encrypt'): void {
     fs.readFile(inputFilePath, 'utf8', (err, data) => {
         if (err) {
-            console.error(`Error occurred while reading file: ${err}`);
-            return;
+            throw new Error(`Error occurred while reading file: ${err}`);
         }
 
-        const dataTrimmed = data.trim();
-        const breakLineIndex = dataTrimmed.indexOf('\n');
+        const lines = data.trim().split('\n');
 
-        if (breakLineIndex === -1) {
-            console.error('Wrong file format. \nFirst line should be: a b. Second line: text');
-            return;
+        if (lines.length < 2) {
+            throw new Error('Wrong file format. \nFirst line should be: a b. Second line: text');
         }
 
-        const coefficients = dataTrimmed.slice(0, breakLineIndex);
-        const text = dataTrimmed.slice(breakLineIndex + 1);
+        const [coefficients, text] = lines;
 
         const [a, b] = coefficients.split(" ");
 
