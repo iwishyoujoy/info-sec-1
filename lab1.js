@@ -3,12 +3,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var fs = require("fs");
 var path = require("node:path");
 // Символы, которые можно зашифровать (английский алфавит, русский алфавит, знаки препинания)
-var encryptAlphabet = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюя1234567890,.:;"-?!/[]= “«»”*&^(){}'.split('');
+var encryptAlphabet = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ1234567890,.:;"-?!/[]= “«»”*&^(){}'.split('');
 // Количество символов в используемом алфавите
 var m = encryptAlphabet.length;
-var a = 8;
-var b = 8;
-var a1 = 42;
+var a = 3;
+var b = 3;
+var a1 = 67;
 // Функция для проверки чисел на взаимную простоту
 var coprimedNumbers = function () {
     var options = [];

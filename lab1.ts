@@ -2,13 +2,13 @@ import * as fs from 'fs';
 import * as path from "node:path";
 
 // Символы, которые можно зашифровать (английский алфавит, русский алфавит, знаки препинания)
-const encryptAlphabet: string[] = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюя1234567890,.:;"-?!/[]= “«»”*&^(){}'.split('');
+const encryptAlphabet: string[] = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ1234567890,.:;"-?!/[]= “«»”*&^(){}'.split('');
 
 // Количество символов в используемом алфавите
 const m = encryptAlphabet.length;
-const a = 8;
-const b = 8;
-const a1 = 42;
+const a = 3;
+const b = 3;
+const a1 = 67;
 
 // Функция для проверки чисел на взаимную простоту
 const coprimedNumbers = () => {
@@ -193,10 +193,10 @@ function frequencyDecrypt(plainText: string, inputFileName: string) {
 }
 
 // Вызов функции шифрования
-processFile('./text1.txt', 'encrypt');
+// processFile('./text1.txt', 'encrypt');
 
 // Вызов функции дешифрации
 // processFile('./text1_encrypted.txt', 'decrypt');
 
 // Вызов функции для частотного анализа
-// processFile('./text1.txt', 'frequency');
+processFile('./text1.txt', 'frequency');
