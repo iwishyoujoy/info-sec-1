@@ -1,10 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var fs = require("fs");
+var path = require("node:path");
 // Символы, которые можно зашифровать (английский алфавит, русский алфавит, знаки препинания)
-var encryptAlphabet = 'abcdefghijklmnopqrstuvwxyzабвгдеёжзийклмнопрстуфхцчшщъыьэюя.,!?/-+=(){}[]:;'.split('');
+var encryptAlphabet = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюя1234567890,.:;"-?!/[]= “«»”*&^(){}'.split('');
 // Количество символов в используемом алфавите
 var m = encryptAlphabet.length;
+var a = 8;
+var b = 8;
+var a1 = 42;
 // Функция для проверки чисел на взаимную простоту
 var coprimedNumbers = function () {
     var options = [];
@@ -33,32 +37,14 @@ function gcd(a, b) {
 function checkCoprimeNumbers(a) {
     return gcd(a, m) === 1;
 }
-// Функция для поиска обратного числа по модулю
-function modularInverse(a) {
-    var t = 0;
-    var newt = 1;
-    var r = m;
-    var newr = a;
-    while (newr !== 0) {
-        var quotient = Math.floor(r / newr);
-        var temp = t - quotient * newt;
-        t = newt;
-        newt = temp;
-        var temp2 = r - quotient * newr;
-        r = newr;
-        newr = temp2;
-    }
-    if (r !== 1)
-        throw new Error("Modular inverse for A does not exist");
-    return (t + m) % m;
-}
 /**
  * Шифрование конкретного символа
- * @param a - число, взаимно простое с длиной шифруемого алфавита
- * @param b - число, сдвиг
  * @param char - символ для шифровки
  */
-function encryptChar(a, b, char) {
+function encryptChar(char) {
+    // const upperCase = char.toUpperCase();
+    // let isUpperCase = false;
+    // if (upperCase === char) isUpperCase = true;
     var x = getCharacterIndex(char);
     if (x === -1)
         return char;
@@ -66,48 +52,68 @@ function encryptChar(a, b, char) {
 }
 /**
  * Расшифровка конкретного символа
- * @param a - число, взаимно простое с длиной шифруемого алфавита
- * @param b - число, сдвиг
  * @param char - зашифрованный символ для расшифровки
  */
-function decryptChar(a, b, char) {
-    var x = encryptAlphabet.indexOf(char);
+function decryptChar(char) {
+    // const upperCase = char.toUpperCase();
+    // let isUpperCase = false;
+    // if (upperCase === char) isUpperCase = true;
+    var x = getCharacterIndex(char);
     if (x === -1)
         return char;
-    var inverse = modularInverse(a);
-    return encryptAlphabet[(inverse * (x - b)) % m];
+    var index = (a1 * (x - b)) % m;
+    if (index < 0) {
+        index = m + index;
+    }
+    return encryptAlphabet[index];
 }
 /**
  * Функция шифрования текста
- * @param a - число, взаимно простое с длиной шифруемого алфавита
- * @param b - число, сдвиг
  * @param text - текст для шифровки
+ * @param inputFileName - название исходного файла
  */
-function encrypt(a, b, text) {
+function encrypt(text, inputFileName) {
     var symbolsToEncrypt = text.split('');
     if (!checkCoprimeNumbers(a))
         throw new Error("A is not coprime to the length of alphabet. \n These are the options: ".concat(coprimedNumbers().join(" ")));
     var result = [];
     symbolsToEncrypt.forEach(function (char) {
-        result.push(encryptChar(a, b, char));
+        result.push(encryptChar(char));
     });
-    console.log(result.join(''));
+    var newFileName = path.basename(inputFileName, path.extname(inputFileName)) + '_encrypted.txt';
+    var content = result.join('');
+    fs.writeFile(newFileName, content, function (err) {
+        if (err)
+            console.log('Error occurred during writing encrypted file: ', { err: err });
+        else {
+            console.log('File was written successfully, here what\'s inside:');
+            console.log(content);
+        }
+    });
 }
 /**
  * Функция дешифровки текста
- * @param a - число, взаимно простое с длиной шифруемого алфавита
- * @param b - число, сдвиг
  * @param text - текст для дешифровки
+ * @param inputFileName - название исходного файла
  */
-function decrypt(a, b, text) {
+function decrypt(text, inputFileName) {
     var symbolsToDecrypt = text.split('');
     if (!checkCoprimeNumbers(a))
         throw new Error("A is not coprime to the length of alphabet. \n These are the options: ".concat(coprimedNumbers().join(" ")));
     var result = [];
     symbolsToDecrypt.forEach(function (char) {
-        result.push(decryptChar(a, b, char));
+        result.push(decryptChar(char));
     });
-    console.log(result.join(''));
+    var newFileName = path.basename(inputFileName, path.extname(inputFileName)) + '_decrypted.txt';
+    var content = result.join('');
+    fs.writeFile(newFileName, content, function (err) {
+        if (err)
+            console.log('Error occurred during writing decrypted file: ', { err: err });
+        else {
+            console.log('File was written successfully, here what\'s inside:');
+            console.log(content);
+        }
+    });
 }
 /**
  * Функция обработки файла и вызов необходимого метода
@@ -120,29 +126,25 @@ function processFile(inputFilePath, mode) {
         if (err) {
             throw new Error("Error occurred while reading file: ".concat(err));
         }
-        if (mode === 'frequency') {
-            frequencyDecrypt(data.trim());
-            return;
-        }
-        var lines = data.trim().split('\n');
-        if (lines.length < 2) {
-            throw new Error('Wrong file format. \nFirst line should be: a b. Second line: text');
-        }
-        var coefficients = lines[0], text = lines[1];
-        var _a = coefficients.split(" "), a = _a[0], b = _a[1];
-        if (mode === 'encrypt') {
-            encrypt(Number(a), Number(b), text);
-        }
-        else {
-            decrypt(Number(a), Number(b), text);
+        switch (mode) {
+            case "encrypt":
+                encrypt(data, inputFilePath);
+                return;
+            case "decrypt":
+                decrypt(data, inputFilePath);
+                return;
+            case "frequency":
+                frequencyDecrypt(data, inputFilePath);
+                return;
         }
     });
 }
 /**
  * Функция частотного анализа
  * @param plainText - текст для анализа
+ * @param inputFileName - название исходного файла
  */
-function frequencyDecrypt(plainText) {
+function frequencyDecrypt(plainText, inputFileName) {
     var lettersCount = {};
     for (var _i = 0, plainText_1 = plainText; _i < plainText_1.length; _i++) {
         var char = plainText_1[_i];
@@ -150,17 +152,26 @@ function frequencyDecrypt(plainText) {
             lettersCount[char] = (lettersCount[char] || 0) + 1;
         }
     }
-    console.log('| Буква | Кол-во, шт. | Частота, % |');
+    var newFileName = path.basename(inputFileName, path.extname(inputFileName)) + '_freq.txt';
+    var content = ['| Буква | Кол-во, шт. | Частота, % |'];
     for (var _a = 0, encryptAlphabet_1 = encryptAlphabet; _a < encryptAlphabet_1.length; _a++) {
         var letter = encryptAlphabet_1[_a];
         var count = lettersCount[letter] || 0;
         var freq = (count / plainText.length) * 100;
-        console.log("| ".concat(letter.padEnd(4), " | ").concat(count.toString().padStart(6), " | ").concat((freq.toFixed(3)).padStart(12), " |"));
+        content.push("| ".concat(letter.padEnd(5), " | ").concat(count.toString().padStart(11), " | ").concat((freq.toFixed(3)).padStart(10), " |"));
     }
+    fs.writeFile(newFileName, content.join('\n'), function (err) {
+        if (err)
+            console.log('Error occurred during writing frequency analysis file: ', { err: err });
+        else {
+            console.log('File was written successfully, here what\'s inside:');
+            console.log(content.join('\n'));
+        }
+    });
 }
 // Вызов функции шифрования
-// processFile('./text2.txt', 'encrypt');
+// processFile('./text1.txt', 'encrypt');
 // Вызов функции дешифрации
-// processFile('./text.txt', 'decrypt');
+// processFile('./text1_encrypted.txt', 'decrypt');
 // Вызов функции для частотного анализа
-processFile('./text2_encrypted.txt', 'frequency');
+processFile('./text1.txt', 'frequency');

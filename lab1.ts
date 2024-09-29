@@ -1,10 +1,14 @@
 import * as fs from 'fs';
+import * as path from "node:path";
 
 // Символы, которые можно зашифровать (английский алфавит, русский алфавит, знаки препинания)
-const encryptAlphabet: string[] = 'abcdefghijklmnopqrstuvwxyzабвгдеёжзийклмнопрстуфхцчшщъыьэюя.,!?/-+=(){}[]:;'.split('');
+const encryptAlphabet: string[] = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюя1234567890,.:;"-?!/[]= “«»”*&^(){}'.split('');
 
 // Количество символов в используемом алфавите
-const m = encryptAlphabet.length; 
+const m = encryptAlphabet.length;
+const a = 8;
+const b = 8;
+const a1 = 42;
 
 // Функция для проверки чисел на взаимную простоту
 const coprimedNumbers = () => {
@@ -38,37 +42,17 @@ function checkCoprimeNumbers(a: number) {
     return gcd(a, m) === 1;
 }
 
-// Функция для поиска обратного числа по модулю
-function modularInverse(a: number): number {
-    let t = 0;
-    let newt = 1;
-    let r = m;
-    let newr = a;
-
-    while (newr !== 0) {
-        const quotient = Math.floor(r / newr);
-        const temp = t - quotient * newt;
-        t = newt;
-        newt = temp;
-
-        const temp2 = r - quotient * newr;
-        r = newr;
-        newr = temp2;
-    }
-
-    if (r !== 1) throw new Error("Modular inverse for A does not exist");
-
-    return (t + m) % m;
-}
-
 /**
  * Шифрование конкретного символа
- * @param a - число, взаимно простое с длиной шифруемого алфавита
- * @param b - число, сдвиг
  * @param char - символ для шифровки
  */
-function encryptChar(a: number, b: number, char: string): string {
+function encryptChar(char: string): string {
+    // const upperCase = char.toUpperCase();
+    // let isUpperCase = false;
+    // if (upperCase === char) isUpperCase = true;
+
     const x = getCharacterIndex(char);
+
     if (x === -1) return char;
 
     return encryptAlphabet[(a * x + b) % m];
@@ -76,26 +60,30 @@ function encryptChar(a: number, b: number, char: string): string {
 
 /**
  * Расшифровка конкретного символа
- * @param a - число, взаимно простое с длиной шифруемого алфавита
- * @param b - число, сдвиг
  * @param char - зашифрованный символ для расшифровки
  */
-function decryptChar(a: number, b: number, char: string): string {
-    const x = encryptAlphabet.indexOf(char);
+function decryptChar(char: string): string {
+    // const upperCase = char.toUpperCase();
+    // let isUpperCase = false;
+    // if (upperCase === char) isUpperCase = true;
+
+    const x = getCharacterIndex(char);
     if (x === -1) return char;
 
-    const inverse = modularInverse(a);
+    let index = (a1 * (x - b)) % m;
+    if (index < 0){
+        index = m + index;
+    }
 
-    return encryptAlphabet[(inverse * (x - b)) % m];
+    return encryptAlphabet[index];
 }
 
 /**
  * Функция шифрования текста
- * @param a - число, взаимно простое с длиной шифруемого алфавита
- * @param b - число, сдвиг
  * @param text - текст для шифровки
+ * @param inputFileName - название исходного файла
  */
-function encrypt(a: number, b: number, text: string) {
+function encrypt(text: string, inputFileName: string) {
     const symbolsToEncrypt = text.split('');
 
     if (!checkCoprimeNumbers(a)) throw new Error(`A is not coprime to the length of alphabet. \n These are the options: ${coprimedNumbers().join(" ")}`);
@@ -103,19 +91,27 @@ function encrypt(a: number, b: number, text: string) {
     const result: string[] = [];
 
     symbolsToEncrypt.forEach((char) => {
-        result.push(encryptChar(a, b, char));
+        result.push(encryptChar(char));
     })
 
-    console.log(result.join(''));
+    const newFileName = path.basename(inputFileName, path.extname(inputFileName)) + '_encrypted.txt';
+    const content = result.join('');
+
+    fs.writeFile(newFileName, content, (err) => {
+        if (err) console.log('Error occurred during writing encrypted file: ', {err})
+        else {
+            console.log('File was written successfully, here what\'s inside:')
+            console.log(content);
+        }
+    });
 }
 
 /**
  * Функция дешифровки текста
- * @param a - число, взаимно простое с длиной шифруемого алфавита
- * @param b - число, сдвиг
  * @param text - текст для дешифровки
+ * @param inputFileName - название исходного файла
  */
-function decrypt(a: number, b: number, text: string) {
+function decrypt(text: string, inputFileName: string) {
     const symbolsToDecrypt = text.split('');
 
     if (!checkCoprimeNumbers(a)) throw new Error(`A is not coprime to the length of alphabet. \n These are the options: ${coprimedNumbers().join(" ")}`);
@@ -123,10 +119,19 @@ function decrypt(a: number, b: number, text: string) {
     const result: string[] = [];
 
     symbolsToDecrypt.forEach((char) => {
-        result.push(decryptChar(a, b, char));
+        result.push(decryptChar(char));
     })
 
-    console.log(result.join(''));
+    const newFileName = path.basename(inputFileName, path.extname(inputFileName)) + '_decrypted.txt';
+    const content = result.join('');
+
+    fs.writeFile(newFileName, content, (err) => {
+        if (err) console.log('Error occurred during writing decrypted file: ', {err})
+        else {
+            console.log('File was written successfully, here what\'s inside:')
+            console.log(content);
+        }
+    });
 }
 
 /**
@@ -140,25 +145,16 @@ function processFile(inputFilePath: string, mode: 'encrypt' | 'decrypt' | 'frequ
             throw new Error(`Error occurred while reading file: ${err}`);
         }
 
-        if (mode === 'frequency') {
-            frequencyDecrypt(data.trim());
-            return;
-        }
-
-        const lines = data.trim().split('\n');
-
-        if (lines.length < 2) {
-            throw new Error('Wrong file format. \nFirst line should be: a b. Second line: text');
-        }
-
-        const [coefficients, text] = lines;
-
-        const [a, b] = coefficients.split(" ");
-
-        if (mode === 'encrypt') {
-            encrypt(Number(a), Number(b), text);
-        } else{
-            decrypt(Number(a), Number(b), text);
+        switch (mode) {
+            case "encrypt":
+                encrypt(data, inputFilePath);
+                return;
+            case "decrypt":
+                decrypt(data, inputFilePath);
+                return;
+            case "frequency":
+                frequencyDecrypt(data, inputFilePath);
+                return
         }
     });
 }
@@ -166,8 +162,9 @@ function processFile(inputFilePath: string, mode: 'encrypt' | 'decrypt' | 'frequ
 /**
  * Функция частотного анализа
  * @param plainText - текст для анализа
+ * @param inputFileName - название исходного файла
  */
-function frequencyDecrypt(plainText: string) {
+function frequencyDecrypt(plainText: string, inputFileName: string) {
     const lettersCount: { [key: string]: number } = {};
 
     for (let char of plainText) {
@@ -176,20 +173,30 @@ function frequencyDecrypt(plainText: string) {
         }
     }
 
-    console.log('| Буква | Кол-во, шт. | Частота, % |');
+    const newFileName = path.basename(inputFileName, path.extname(inputFileName)) + '_freq.txt';
+
+    const content = ['| Буква | Кол-во, шт. | Частота, % |'];
 
     for (let letter of encryptAlphabet) {
         const count = lettersCount[letter] || 0;
         const freq = (count / plainText.length) * 100;
-        console.log(`| ${letter.padEnd(4)} | ${count.toString().padStart(6)} | ${(freq.toFixed(3)).padStart(12)} |`);
+        content.push(`| ${letter.padEnd(5)} | ${count.toString().padStart(11)} | ${(freq.toFixed(3)).padStart(10)} |`);
     }
+
+    fs.writeFile(newFileName, content.join('\n'), (err) => {
+        if (err) console.log('Error occurred during writing frequency analysis file: ', {err})
+        else {
+            console.log('File was written successfully, here what\'s inside:')
+            console.log(content.join('\n'));
+        }
+    })
 }
 
 // Вызов функции шифрования
-// processFile('./text2.txt', 'encrypt');
+processFile('./text1.txt', 'encrypt');
 
 // Вызов функции дешифрации
-// processFile('./text.txt', 'decrypt');
+// processFile('./text1_encrypted.txt', 'decrypt');
 
 // Вызов функции для частотного анализа
-processFile('./text2_encrypted.txt', 'frequency');
+// processFile('./text1.txt', 'frequency');
